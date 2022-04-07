@@ -33,15 +33,41 @@ class Request
      */
     private $headers = [];
 
-    public function __construct()
+    /**
+     * Instância do router
+     * @var $router
+     */
+    private $router;
+
+    public function __construct($router)
     {
+        $this->router      = $router;
         $this->queryParams = $_GET ?? [];
         $this->postVars    = $_POST ?? [];
         $this->headers     = getallheaders();
         $this->httpMethod  = $_SERVER['REQUEST_METHOD'] ?? [];
-        $this->uri         = $_SERVER['REQUEST_URI'] ?? [];
+        $this->setUri();
     }
 
+    /**
+     * Método responsavel por definir a Uri
+     */
+    private function setUri(){
+        //URI completa com GETS
+        $this->uri = $_SERVER['REQUEST_URI'] ?? [];
+
+        //Remove GETS URI
+        $xUri = explode('?', $this->uri);
+        $this->uri = $xUri[0];
+    }
+
+    /**
+     * Método responsavel por retornar a instancia de router
+     * @return Router
+     */
+    public function getRouter(){
+        return$this->router;
+    }
     /**
      * Método responsável por retornar o método HTTP da requisição
      * @return string

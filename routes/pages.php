@@ -16,6 +16,20 @@ $obRouter->get('/sobre',[
     }
 ]);
 
+//Rota Depoimentos
+$obRouter->get('/depoimentos',[
+    function($request){
+        return new Response('200',Pages\Depoimentos::getDepoimentos($request));
+    }
+]);
+
+//Rota Depoimentos insert
+$obRouter->post('/depoimentos',[
+    function($request){
+        return new Response('200',Pages\Depoimentos::insereDepoimento($request));
+    }
+]);
+
 //Rota Dinâmica
 $obRouter->get('/pagina/{idPagina}/{acao}',[
     function($idPagina, $acao){

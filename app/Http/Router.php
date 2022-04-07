@@ -5,6 +5,7 @@ namespace App\Http;
 use \Closure;
 use \Exception;
 use \ReflectionFunction;
+use \App\Http\Middleware\Queue as MiddlewareQueue;
 
 class Router
 {
@@ -39,7 +40,7 @@ class Router
      */
     public function __construct($url)
     {
-        $this->request = new Request();
+        $this->request = new Request($this);
         $this->url     = $url;
         $this->setPrefix();
     }
@@ -53,6 +54,7 @@ class Router
 
         //Define o prefixo
         $this->prefix = $parseUrl['path'] ?? '';
+
     }
 
     /**
@@ -70,6 +72,8 @@ class Router
                 continue;
             }
         }
+
+        $params['middlewares'] = $params['middlewares'] ?? [];
 
         //Váriaves da rota
         $params['variables'] = [];
@@ -114,6 +118,7 @@ class Router
     private function getUri(){
         //URI da Request
         $uri = $this->request->getUri();
+
         //Fatia a URI com o prefixo
         $xUri = strlen($this->prefix)? explode($this->prefix,$uri):[$uri];
 
@@ -134,6 +139,7 @@ class Router
 
         //Valida as rotas
         foreach ($this->routes as $patternRoute=>$methods){
+
             //Verifica se a URI bate com o padrão
             if(preg_match($patternRoute,$uri,$matches)){
 
@@ -182,11 +188,32 @@ class Router
                 $args[$name] = $route['variables'][$name]??'';
             }
 
-            //Retorna a execução da função
-            return call_user_func_array($route['controller'], $args);
+            //RETORNA A EXCUÇÃO DA FILA DE MIDDLEWARES
+            return (new MiddlewareQueue($route['middlewares'],$route['controller'],$args))->next($this->request);
 
         }catch (Exception $e){
             return new Response($e->getCode(), $e->getMessage());
         }
     }
+
+    /**
+     * METODO RESPONSAVEL POR RETORNAR A URL ATUAL
+     * @return string
+     */
+    public function getCurrentUrl(){
+        return $this->url.$this->getUri();
+    }
+
+    /**
+     * Método responsavel por redirecionar a URL
+     * @param string $route
+     */
+    public function redirect($route){
+        $url = $this->url.$route;
+
+        //EXECUTA O REDIRECT
+        header('location: '.$url);
+        exit();
+    }
+
 }
